@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">CustomBroadcastReceiverListener</string>
+    <string name="send_broadcast_intent">Send Broadcast Intent</string>
+</resources>
