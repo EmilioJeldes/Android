@@ -42,8 +42,9 @@ public class MainActivity extends AppCompatActivity {
             String action = intent.getAction();
 
             // compare the action with the expected.
-            // In this case BluetoothAdapter.ACTION_STATE_CHANGED (bluetooth state)
+            // In this case BluetoothAdapter.ACTION_STATE_CHANGED to catch Bluetooth State
             if (action != null && action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                // Get the current state from the passed intent
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
 
                 switch (state) {
@@ -71,9 +72,12 @@ public class MainActivity extends AppCompatActivity {
     BroadcastReceiver mBroadCastReceiver2 = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            // Grab the action from the intent
             final String action = intent.getAction();
 
+            // Compare it with ACTION_SCAN_MODE_CHANGED to catch bluetooth scan changes
             if (action != null && action.equals(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)) {
+                // Get mode from intent
                 int mode = intent.getIntExtra(BluetoothAdapter.EXTRA_SCAN_MODE, BluetoothAdapter.ERROR);
 
                 switch (mode) {
@@ -102,14 +106,20 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Broadcast Receiver to discover devices and set it to a list
     BroadcastReceiver mBroadCastReceiver3 = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            // Get the action
             final String action = intent.getAction();
             Log.d(TAG, "onReceive: ACTION FOUND");
 
+            // Check the action
             if (action != null && action.equals(BluetoothDevice.ACTION_FOUND)) {
+                // Get the bluetooth from getParcelableExtra and passing the EXTRA_DEVICE
                 BluetoothDevice bluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+                // Add the device to the list
                 devices.add(bluetoothDevice);
                 Log.d(TAG, "onReceive: " + bluetoothDevice.getName() + ": " + bluetoothDevice.getAddress());
                 deviceListAdapter = new DeviceListAdapter(context, R.layout.activity_device_list_adapter, devices);
@@ -123,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize variables
         Button btnOnOff = findViewById(R.id.btn_on_off);
         Button btnDiscoverability = findViewById(R.id.btn_enable_discovery);
         deviceListView = findViewById(R.id.list_new_devices);
@@ -137,27 +148,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver(mBroadCastReceiver1);
-        unregisterReceiver(mBroadCastReceiver2);
+    protected void onStop() {
+        super.onStop();
+        devices.clear();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        devices.clear();
+        try {
+            unregisterReceiver(mBroadCastReceiver1);
+            unregisterReceiver(mBroadCastReceiver2);
+            unregisterReceiver(mBroadCastReceiver3);
+        } catch (Exception e) {
+            Log.d(TAG, "onDestroy: Exception trying to unregister receivers");
+        }
+
+    }
 
     private void ensableDisableBT() {
         if (mBluetoothAdapter == null) {
             Log.d(TAG, "ensableDisableBT: does not have BT capabilities");
         }
         if (!mBluetoothAdapter.isEnabled()) {
+            // Intent to enable Bluetooth (ACTION_REQUEST_ENABLE)
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivity(enableBTIntent);
 
+            // Intent filter with ACTION_STATE_CHANGED
             IntentFilter btIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
             registerReceiver(mBroadCastReceiver1, btIntentFilter);
         }
         if (mBluetoothAdapter.isEnabled()) {
             mBluetoothAdapter.disable();
 
+            // Intent filter with ACTION_STATE_CHANGED
             IntentFilter btIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
             registerReceiver(mBroadCastReceiver1, btIntentFilter);
         }
@@ -179,18 +205,23 @@ public class MainActivity extends AppCompatActivity {
     public void btnDiscover(View view) {
         Log.d(TAG, "btnDiscover: Loogking for unpaired devices.");
 
+        // If bluetoothAdapter already discovering
         if (mBluetoothAdapter.isDiscovering()) {
+            // cancel it
             mBluetoothAdapter.cancelDiscovery();
             Log.d(TAG, "btnDiscover: Canceling discovery.");
 
             // Check BT permissions in manifes
             checkBTPermissions();
 
+            // Start discovery again
             mBluetoothAdapter.startDiscovery();
 
+            // Register bc receiver with intent ACTION_FOUND (when a remote device is found)
             IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
             registerReceiver(mBroadCastReceiver3, discoverDevicesIntent);
         }
+        // if bluetooth is not discovering
         if (!mBluetoothAdapter.startDiscovery()) {
             Log.d(TAG, "btnDiscover: Discovery wasn't on");
             // Check BT permissions in manifes

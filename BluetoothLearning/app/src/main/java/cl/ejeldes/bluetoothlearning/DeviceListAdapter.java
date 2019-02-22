@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,8 +23,6 @@ public class DeviceListAdapter extends ArrayAdapter<BluetoothDevice> {
     private ArrayList<BluetoothDevice> mDevices;
     private int mViewResourceId;
 
-
-
     public DeviceListAdapter(Context context, int resource, ArrayList<BluetoothDevice> devices) {
         super(context, resource, devices);
         this.mDevices = devices;
@@ -31,26 +30,42 @@ public class DeviceListAdapter extends ArrayAdapter<BluetoothDevice> {
         mViewResourceId = resource;
     }
 
+    static class ViewHolderItem {
+        TextView deviceName;
+        TextView deviceAddress;
+    }
+
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        convertView = mLayoutInflater.inflate(mViewResourceId, null);
 
-        BluetoothDevice device = mDevices.get(position);
+        ViewHolderItem viewHolder;
 
-        if (device != null) {
-            TextView deviceName = convertView.findViewById(R.id.lblDeviceName);
-            TextView deviceAddress = convertView.findViewById(R.id.lblDeviceAddress);
+        // Caching the View to avoid re renderings
+        // If the view gets loaded by the first time
+        if (convertView == null) {
+            // Gets initialized
+            convertView = mLayoutInflater.inflate(mViewResourceId, null);
 
-            if (deviceName != null) {
-                deviceName.setText(device.getName());
-            }
+            // setup Viewholder
+            viewHolder = new ViewHolderItem();
+            viewHolder.deviceName = convertView.findViewById(R.id.lblDeviceName);
+            viewHolder.deviceAddress = convertView.findViewById(R.id.lblDeviceAddress);
+            convertView.setTag(viewHolder);
 
-            if (deviceAddress != null) {
-                deviceAddress.setText(device.getAddress());
-            }
-
+        } else {
+            // If its not null, it gets from the tag inside the view
+            viewHolder = ((ViewHolderItem) convertView.getTag());
         }
+
+        // Get the bluetooth device from the adapter list
+        BluetoothDevice device = mDevices.get(position);
+        if (device != null) {
+            // set the text to the views
+            viewHolder.deviceName.setText(device.getName());
+            viewHolder.deviceAddress.setText(device.getAddress());
+        }
+
         return convertView;
     }
 }
