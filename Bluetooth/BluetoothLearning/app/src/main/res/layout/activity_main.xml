@@ -17,8 +17,8 @@
         android:id="@+id/btn_discover"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/dicover"
-        android:onClick="btnDiscover"/>
+        android:onClick="btnDiscover"
+        android:text="@string/dicover" />
 
     <Button
         android:id="@+id/btn_enable_discovery"
