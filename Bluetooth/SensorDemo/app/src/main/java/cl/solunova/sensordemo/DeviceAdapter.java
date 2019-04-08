@@ -22,20 +22,22 @@ public class DeviceAdapter extends ArrayAdapter<BluetoothDevice> {
     private int viewResourceId;
 
     public DeviceAdapter(Context context, int resource, ArrayList<BluetoothDevice> devices) {
-        super(context, resource);
+        super(context, resource, devices);
         this.viewResourceId = resource;
         this.layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.devicesList = devices;
-    }
+        Log.d(TAG, "DeviceAdapter: CONSTRUCTOR");
 
-    static class ViewHolder {
-        TextView deviceName;
-        TextView deviceMacAddress;
+        for (BluetoothDevice bluetoothDevice : devicesList) {
+            Log.d(TAG, "DeviceAdapter: DeviceName: " + bluetoothDevice.getName());
+        }
     }
 
     @Override
     @NonNull
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+
+        Log.d(TAG, "getView: ON GET_VIEW");
 
         ViewHolder viewHolder;
 
@@ -43,7 +45,7 @@ public class DeviceAdapter extends ArrayAdapter<BluetoothDevice> {
         if (convertView == null) {
             Log.d(TAG, "getView: Converview Null");
             // initialize convert view
-            convertView = layoutInflater.inflate(viewResourceId, null);
+            convertView = layoutInflater.inflate(viewResourceId, parent, false);
 
             // Initialize view holder
             viewHolder = new ViewHolder();
@@ -66,5 +68,10 @@ public class DeviceAdapter extends ArrayAdapter<BluetoothDevice> {
         Log.d(TAG, "getView: deviceAddress: " + viewHolder.deviceMacAddress);
 
         return convertView;
+    }
+
+    private static class ViewHolder {
+        TextView deviceName;
+        TextView deviceMacAddress;
     }
 }

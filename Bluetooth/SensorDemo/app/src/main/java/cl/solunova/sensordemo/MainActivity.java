@@ -21,13 +21,14 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    private ArrayList<BluetoothDevice> devices;
+    private HashSet<BluetoothDevice> devices;
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         Button btnDiscover = findViewById(R.id.btn_start_discover);
         listView = findViewById(R.id.device_list);
 
-        devices = new ArrayList<>();
+        devices = new HashSet<>();
 
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
@@ -66,39 +67,47 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View v) {
-                startDiscovering();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    startDiscovering();
+                }
             }
         });
+
+
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private void startDiscovering() {
+        devices.clear();
         scanCallback = getScanCallback();
         checkBTPermissions();
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
 
         bluetoothLeScanner.startScan(null, scanSettings, scanCallback);
         scanTimeoutHandler.postDelayed(new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void run() {
                 stopScan();
             }
-        }, 2000);
+        }, 5000);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private void stopScan() {
         scanTimeoutHandler.removeCallbacksAndMessages(null);
         if (scanCallback != null) {
             Log.d(TAG, "stopScan: Stopping scanner");
             bluetoothLeScanner.stopScan(scanCallback);
-            deviceAdapter = new DeviceAdapter(this, R.layout.bluetooth_sensor_found_layout, devices);
-            listView.setAdapter(deviceAdapter);
+
             for (BluetoothDevice device : devices) {
                 Log.d(TAG, "stopScan: name: " + device.getName() + "\naddress: " + device.getAddress());
             }
+
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private ScanCallback getScanCallback() {
         return new ScanCallback() {
             @Override
@@ -112,6 +121,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 devices.add(device);
                 Log.d(TAG, "onScanResult: Device Found: " + device.getName() + ":" + device.getAddress());
+
+                deviceAdapter = new DeviceAdapter(getApplication(), R.layout.bluetooth_sensor_found_layout, new ArrayList<>(devices));
+                listView.setAdapter(deviceAdapter);
             }
 
             @Override
